@@ -8,11 +8,42 @@
 import SwiftUI
 
 struct SearchView: View {
+    @State private var searchText: String = ""
+    @Binding var allMangas: [Manga]
+
+    var filteredMangas: [Binding<Manga>] {
+        if searchText.isEmpty {
+            return allMangas.indices.map { $allMangas[$0] }
+        } else {
+            return allMangas.indices
+                .filter {
+                    allMangas[$0].title.localizedCaseInsensitiveContains(
+                        searchText
+                    )
+                }
+                .map { $allMangas[$0] }
+        }
+    }
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            List {
+                ForEach(filteredMangas) { $manga in
+                    NavigationLink {
+                        DescriptionView(manga: $manga)
+                    } label: {
+                        MangaCellView(manga: $manga)
+                       
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .searchable(text: $searchText, prompt: "Rechercher un manga")
+        }
+        .tint(.redSusume)
     }
 }
 
 #Preview {
-    SearchView()
+    SearchView(allMangas: .constant(mangas))
 }

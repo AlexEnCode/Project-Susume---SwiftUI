@@ -7,65 +7,82 @@
 
 import SwiftUI
 
-struct ReadView: View {
 
+import SwiftUI
+
+struct ReadView: View {
     @State private var selectedTab: Int = 0
-  //   var manga : Manga
+    @State private var showToRead: Bool = true
+    @Binding var mangas: [Manga]
+    
+    @State private var fadeEnd: CGFloat = 1.0
+    
+    var filteredMangas: [Binding<Manga>] {
+        mangas.indices
+            .filter { showToRead ? mangas[$0].isToRead : mangas[$0].isRead }
+            .map { $mangas[$0] }
+    }
 
     var body: some View {
-
         NavigationStack {
-
-            VStack(alignment: .leading) {
-
-                HStack {
-                    Button(action: { selectedTab = 0 }) {
-                        Text("A lire")
-                            .padding(4)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                selectedTab == 0 ? Color.red : Color.clear
-                            )
-                            .foregroundColor(selectedTab == 0 ? .white : .black)
-                            .cornerRadius(10)
-
+            VStack {
+                // Toggle lu / pas lu
+                HStack(spacing: 0) {
+                    Button(action: {
+                        showToRead = true
+                    }) {
+                        Text("À lire")
+                            .fontWeight(.bold)
+                            .foregroundColor(showToRead ? .black : .white)
+                            .frame(maxWidth: .infinity, maxHeight: 30)
+                            .background(showToRead ? .white : .clear)
                     }
-                    Button(action: { selectedTab = 1 }) {
+                    .cornerRadius(4)
+                    .padding(2)
+                    
+                    Button(action: {
+                        showToRead = false
+                    }) {
                         Text("Lus")
-                            .padding(4)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                selectedTab == 1 ? Color.red : Color.clear
-                            )
-                            .foregroundColor(selectedTab == 1 ? .white : .black)
-                            .cornerRadius(10)
-
+                            .fontWeight(.bold)
+                            .foregroundColor(!showToRead ? .black : .white)
+                            .frame(maxWidth: .infinity, maxHeight: 30)
+                            .background(!showToRead ? .white : .clear)
                     }
+                    .cornerRadius(4)
+                    .padding(2)
                 }
-
+                .frame(height: 36)
+                .background(.redSusume)
+                .cornerRadius(4)
                 .padding(.horizontal)
 
-                Divider()
-
-                ScrollView {
-
-                    ForEach(mangas) { manga in
-
+                // Liste des mangas
+                List {
+                    ForEach(filteredMangas) { $manga in
                         NavigationLink {
-                            DescriptionView(manga: manga)
+                            DescriptionView(manga: $manga)
                         } label: {
-                            MangaCellView(manga: manga)
+                            MangaCellView(manga: $manga)
                         }
-
                     }
-
                 }
+                .listStyle(.plain)
             }
-
         }
     }
 }
 
+
+
 #Preview {
-    ReadView()
+    PreviewWrapper()
+}
+
+private struct PreviewWrapper: View {
+    @State var previewMangas: [Manga] = mangas 
+
+    var body: some View {
+        ReadView(mangas: $previewMangas)
+    }
 }

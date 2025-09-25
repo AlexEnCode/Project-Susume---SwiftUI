@@ -4,13 +4,15 @@ struct MainView: View {
 
     // penser a mettre manga dans RootView pour la donné persistante !!!
 
+    // Attention, les boutons ne changent pas la valeur des booléens isToRead ==
+
+    var mangas: [Manga] {
+        let source = filteredMangas.isEmpty ? allMangas : filteredMangas
+        return source.filter { !$0.isRead && !$0.isToRead }
+    }
 
     
-    var mangas: [Manga] {
-        filteredMangas.isEmpty ? allMangas : filteredMangas
-    }
-    
-    let allMangas: [Manga]
+    @Binding var allMangas: [Manga]
     @Binding var filteredMangas: [Manga]
 
     @State private var currentIndex = 0
@@ -18,26 +20,29 @@ struct MainView: View {
     @State private var showButtons = false
 
     @State private var animate = false
-    
-    @State private var selectedManga: Manga? = nil //manga selectionné pour "info"
 
+    @State private var selectedManga: Manga? = nil  //manga selectionné pour "info"
+
+    
     @State private var favoriteMangas: [Manga] = []
     @State private var rejectedMangas: [Manga] = []
 
-    
-     // selection pour info
-    
-    
+    // selection pour info
+
     private func swipeAway(to direction: CGFloat, isToRead: Bool) {
         withAnimation(.easeInOut(duration: 0.3)) {
             offset = CGSize(width: direction, height: 0)
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            if isToRead {
-                favoriteMangas.append(mangas[currentIndex])
-            } else {
-                rejectedMangas.append(mangas[currentIndex])
+            let swipedManga = mangas[currentIndex]
+
+            if let indexInAll = allMangas.firstIndex(where: {
+                $0.id == swipedManga.id
+            }) {
+                allMangas[indexInAll].isToRead = isToRead
+                allMangas[indexInAll].isRead = false
+                allMangas[indexInAll].notToRead = !isToRead
             }
 
             currentIndex += 1
@@ -46,77 +51,118 @@ struct MainView: View {
     }
 
     func cardView(for manga: Manga) -> some View {
+        // On cherche un binding sur le manga dans allMangas
+        if let index = allMangas.firstIndex(where: { $0.id == manga.id }) {
+            let mangaBinding = $allMangas[index]
 
-        VStack(alignment: .leading, spacing: 8) {
+            return AnyView(
+                VStack(alignment: .leading) {
+                    ZStack(alignment: .bottom) {
+                    
+                        // Image principale
+                        Image(manga.coverImageName)
+                            .resizable()
+                            .scaledToFit()
 
-            ZStack(alignment: .bottom) {
-                Image(manga.coverImageName)
-                    .resizable()
-                    .scaledToFit()
+                        VStack(alignment: .leading, spacing: 8) {
 
-                VStack(alignment: .leading, spacing: 8) {
+                            // Bouton info en haut à droite
+                            HStack {
+                                Spacer()
+                                
+                                
+                                NavigationLink(destination: DescriptionView(manga: mangaBinding, showStatusButtons: false)) {
+                                    Image(systemName: "info")
+                                        .font(.system(size: 30, weight: .bold))
+                                        .foregroundColor(.redSusume)
+                                        .frame(width: 56, height: 56)
+                                        .background {
+                                            Circle()
+                                                .stroke(.redSusume)
+                                                .fill(.white)
+                                                .shadow(color: .black, radius: 2)
+                                        }
+                                        .scaleEffect(animate ? 1 : 0.9)
+                                        .onAppear {
+                                            withAnimation(.spring(duration: 3).repeatForever(autoreverses: true)) {
+                                                animate = true
+                                            }
+                                        }
+                                }
+                                
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal)
+                           // .padding(.top, 16)
 
-                    //nav button pour info sur manga (Zack)
-                    HStack {
-                        Spacer()
+                            // Infos sur le manga
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text(manga.title)
+                                        .font(.title2)
+                                        .fontWeight(.bold)
 
-                        NavigationLink(destination: DescriptionView(manga: manga)) {
-                            Image(systemName: "info")
-                                .scaleEffect(animate ? 1.2 : 0.8)
-                                .onAppear {
-                                    withAnimation(
-                                        .spring(duration: 0.8).repeatForever(autoreverses: true)
-                                    ) {
-                                        animate = true
+                                    Spacer()
+
+                                    HStack(spacing: 4) {
+                                        Text(String(format: "%.1f", manga.externalRating))
+                                            .font(.body)
+                                        Image(systemName: "star.fill")
+                                            .foregroundColor(.yellow)
+                                            .font(.system(size: 14, weight: .light))
                                     }
                                 }
-                                .font(.system(size: 30, weight: .bold))
-                                .foregroundColor(.redSusume)
-                                .frame(width: 56, height: 56)
-                                .background(Color.white)
-                                .clipShape(Circle())
-                                .shadow(radius: 2)
+
+                                // Genre principal
+                                Text(manga.genre.rawValue.capitalized)
+                                    .font(.system(size: 12))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .foregroundStyle(.redSusume)
+                                    }
+                                    .foregroundStyle(.white)
+
+                                // Auteur
+                                Text("par \(manga.author)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+
+                                // Résumé court
+                                Text(manga.shortSummary)
+                                    .font(.footnote)
+
+                                // Tags
+                                FlowLayout(spacing: 8) {
+                                    ForEach(manga.tags, id: \.self) { tag in
+                                        Text(tag.rawValue.capitalized)
+                                            .font(.system(size: 12))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background {
+                                                RoundedRectangle(cornerRadius: 9)
+                                                    .foregroundStyle(.redLightSusume)
+                                            }
+                                    }
+                                }
+                            }
+                            .padding(12)
+                            .background(Color.white.opacity(0.95))
+                            .cornerRadius(12)
+                            .padding()
                         }
-
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal)
-                    .padding(.top, 16)
-                    
-                    // la card d'info en bas
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text(manga.title)
-                                .font(.title2)
-                                .fontWeight(.bold)
-                            Spacer()
-                            HStack(spacing: 4) {
-                                Text(String(format: "%.1f", manga.externalRating))
-                                    .font(.body)
-                                Image(systemName: "star.fill")
-                                    .foregroundColor(.yellow)
-                                    .font(.system(size: 14, weight: .light, design: .default))                            }
-                        }
-                        Text("par \(manga.author)")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-
-                        Text(manga.shortSummary)
-                            .font(.footnote)
-                    }
-                    .padding(12)
-                    .background(Color.white.opacity(0.95))
-                    .cornerRadius(12)
-                    .padding()
-
                 }
-                
-            }
+                .cornerRadius(12)
+                .shadow(radius: 5)
+                .padding(.top, 34)
+            )
+        } else {
+            return AnyView(EmptyView())
         }
-        .cornerRadius(12)
-        .shadow(radius: 5)
-        
     }
+
 
     // La validation du swipe
     func swipeButtons(for manga: Manga) -> some View {
@@ -127,7 +173,7 @@ struct MainView: View {
                     Button(action: {
                         swipeAway(to: 300, isToRead: true)
                     }) {
-                        Image(systemName: "heart.fill")
+                        Image(systemName:"xmark" )
                             .foregroundColor(.white)
                             .padding()
                             .background(Color.redSusume)
@@ -143,14 +189,14 @@ struct MainView: View {
                     Button(action: {
                         swipeAway(to: -300, isToRead: false)
                     }) {
-                        Image(systemName: "xmark")
+                        Image(systemName: "heart.fill")
                             .foregroundColor(.white)
                             .padding()
                             .background(Color.redLightSusume)
                             .clipShape(Circle())
 
                     }
-                    .padding(.leading, 32)
+                    .padding(.leading, 8)
                     .transition(.scale.combined(with: .opacity))
                 }
                 Spacer()
@@ -158,16 +204,8 @@ struct MainView: View {
         }
     }
 
-    
-    
-    
-    
-    
     var body: some View {
 
-
-        
-        
         // FILTRES
         //    NavigationStack {
         //        FilterView(allMangas: mangas)
@@ -181,22 +219,30 @@ struct MainView: View {
             HStack {
                 // logo ?
 
-                Image(.logoTitleSUSUME)
+                Image(.longSUSUME)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 100, height: 30)
+                    .foregroundColor(.redSusume)
+                    .padding(.horizontal, 12)
                 Spacer()
 
-                NavigationLink(destination: FilterView(allMangas: allMangas, filteredMangas: $filteredMangas)) {
-                    Label("", systemImage: "line.3.horizontal.decrease.circle")
-                        .font(.title)
-                        .foregroundColor(.redSusume)
+                
+                NavigationLink(
+                    destination: FilterView(
+                        allMangas: $allMangas,
+                        filteredMangas: $filteredMangas
+                    )
+                ) {
+                    Label("", systemImage: "line.3.horizontal.decrease")
+                        .font(.largeTitle)
+                        .foregroundColor(.black)
+                        .opacity(0.8)
                         .cornerRadius(12)
                 }
             }
-            .padding(.horizontal)
+            .padding(4)
 
-            
             ScrollView(showsIndicators: false) {
                 VStack {
                     if currentIndex < mangas.count {
@@ -246,55 +292,8 @@ struct MainView: View {
                         }
                         .frame(height: 600)
 
-                        // Tags
-                        FlowLayout(spacing: 8) {
-                            Text(manga.genre.rawValue.capitalized)
-                                .font(.system(size: 12))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background {
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .foregroundStyle(.redSusume)
-                                }
-                                .foregroundStyle(.white)
+                       
 
-                            ForEach(manga.tags, id: \.self) { tag in
-                                Text(tag.rawValue.capitalized)
-                                    .font(.system(size: 12))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background {
-                                        RoundedRectangle(cornerRadius: 9)
-                                            .foregroundStyle(.redLightSusume)
-                                    }
-                            }
-                        }
-
-                        // Boutons classiques en bas
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                swipeAway(to: -250, isToRead: false)
-                            }) {
-                                Image(systemName: "xmark")
-                                    .font(.title2)
-                                    .foregroundColor(.redSusume)
-                                    .frame(width: 80, height: 50)
-                                    .background(Color.lightSusume)
-                                    .cornerRadius(12)
-                            }
-
-                            Button(action: {
-                                swipeAway(to: 250, isToRead: true)
-                            }) {
-                                Image(systemName: "heart.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.redSusume)
-                                    .frame(width: 80, height: 50)
-                                    .background(Color.lightSusume)
-                                    .cornerRadius(12)
-                            }
-                        }
-                        .padding()
                     } else {
                         Text("Plus de mangas à afficher.")
                             .font(.title2)
@@ -317,16 +316,10 @@ struct MainView: View {
                         }
                     }
                 }
-                .padding(12)
+                .padding(8)
                 .navigationBarBackButtonHidden(true)
             }
         }
+        .padding(4)
     }
-}
-
-#Preview {
-    MainView(
-        allMangas: [],
-        filteredMangas: .constant([])
-    )
 }

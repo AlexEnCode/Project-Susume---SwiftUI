@@ -1,80 +1,93 @@
-//
-//  RootView.swift
-//  Suzume
-//
-//  Created by apprenant93 on 18/09/2025.
-//
-
 import SwiftUI
 
 struct RootView: View {
+    @State private var showLanding = true
+    @State private var landingOpacity: Double = 1.0
 
     @State private var selectedTab: Tab = .decouvrir
-
-    
-    let allMangas: [Manga]
+    @State private var allMangas: [Manga] = mangas
     @State private var filteredMangas: [Manga] = []
 
     
+    @State private var showTutorial = false
+    
+   
+    
     var body: some View {
-        
-        TabView(selection: $selectedTab) {
+        ZStack {
+            // Ton contenu principal
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    ZStack{
+                        
+                        
+                        MainView(allMangas: $allMangas, filteredMangas: $filteredMangas)
+                        
+                    }
+                }
+                .tabItem {
+                    Label("Découvrir", image: "smallSUSUME")
+                }
+                .tag(Tab.decouvrir)
+
+                NavigationStack {
+                    ReadView(mangas: $allMangas)
+                }
+                .tabItem {
+                    Label("Favoris", systemImage: "books.vertical")
+                }
+                .tag(Tab.favoris)
+
+                SearchView(allMangas: $allMangas)
+                    .tabItem {
+                        Label("Rechercher", systemImage: "magnifyingglass")
+                    }
+                    .tag(Tab.rechercher)
+                
+                NavigationStack {
+                    ProfileView(mangas: allMangas)
+                }
+                .tabItem {
+                    Label("Profil", systemImage: "person")
+                }
+                .tag(Tab.profil)
+
+               
+            }
+            .tint(.redSusume)
+
             
-            // FILTRES
- /*           NavigationStack {
-                FilterView(allMangas: mangas)
-            }
-            .tabItem {
-                Label("Filtres", systemImage: "slider.horizontal.3")
-            }
-            .tag(Tab.filtres) */
-
-
-            // DÉCOUVRIR (avec les résultats du filtre ?)
-            NavigationStack {
-                MainView(allMangas: allMangas, filteredMangas: $filteredMangas) // ou MainView si tu veux afficher les résultats ou sans resultat
-            }
-            .tabItem {
-                Label("Découvrir", image: "LogoSusume") // Image custom dans Assets
-            }
-            .tag(Tab.decouvrir)
-
+            // LE DEBUT DU TRUC
             
-            // FAVORIS
-            NavigationStack {
-    //             ReadView()
-                ReadView()
+            // LandingView
+            if showLanding {
+                LandingView()
+                    .opacity(landingOpacity)
+                    .transition(.opacity)
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            withAnimation(.easeOut(duration: 0.8)) {
+                                landingOpacity = 0.0
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now()
+                            ) {
+                                
+                                showLanding = false
+                                showTutorial = true
+                            }
+                        }
+                    }
             }
-            .tabItem {
-                Label("Favoris", systemImage: "books.vertical")
+            if showTutorial {
+                TutorialView()
+                                                }
+                        }
+                    }
             }
-            .tag(Tab.favoris)
 
 
-            // PROFIL
-            NavigationStack {
-             //   ProfilView() // À créer
-            }
-            .tabItem {
-                Label("Profil", systemImage: "person")
-            }
-            .tag(Tab.profil)
-            
-            
-            // RECHERCHER
-            NavigationStack {
-              //  SearchView() // À créer
-            }
-            .tabItem {
-                Label("Rechercher", systemImage: "magnifyingglass")
-            }
-            .tag(Tab.rechercher)
-        }
-        .tint(.redSusume)
-    }
-}
 
 
 #Preview {
-    RootView(allMangas: mangas)
+    RootView()
 }

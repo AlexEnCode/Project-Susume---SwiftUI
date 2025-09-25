@@ -8,17 +8,19 @@
 import SwiftUI
 
 struct MangaCellView: View {
-    var manga: Manga
+ 
+    
+    @Binding var manga: Manga
+    
     var body: some View {
-        VStack {
-
-            HStack(alignment: .top, spacing: 12) {
+        VStack{
+            HStack(alignment: .top) {
                 Image(manga.coverImageName)
                     .resizable()
                     .scaledToFit()
-                    .frame(height: 150)
+                    .frame(height: 120)
                     .cornerRadius(8)
-
+                
                 VStack(alignment: .leading, spacing: 4) {
                     Text(manga.title)
                         .font(.headline)
@@ -26,24 +28,20 @@ struct MangaCellView: View {
                     Text(manga.author)
                         .font(.subheadline)
                         .foregroundColor(.gray)
-                    Text("(manga.publicationYear)")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-
+                    
                     HStack {
-
+                        
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
                         Text(String(format: "%.1f", manga.externalRating))
                             .font(.caption)
                             .foregroundColor(.gray)
-
+                        
                     }
-
+                    
                 }
                 Spacer()
             }
-            .padding(10)
-        }
+    }
     }
 }

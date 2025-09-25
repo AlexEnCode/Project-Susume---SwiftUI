@@ -5,24 +5,9 @@ struct FilterView: View {
     @State private var filter = FilterCriteria()
     @State private var navigateToResults = false
     
-    let allMangas: [Manga]
+    @Binding var allMangas: [Manga]
     @Binding var filteredMangas: [Manga]
-    
-    
-    // Liste filtrée
-    /*  var filteredMangas: [Manga] {
-     allMangas.filter { manga in
-     // Genre principal
-     (filter.selectedGenres.isEmpty || filter.selectedGenres.contains(manga.genre)) &&
-     // Tags (au moins un en commun)
-     (filter.selectedTags.isEmpty || !filter.selectedTags.isDisjoint(with: Set(manga.tags))) &&
-     // Nombre de tomes
-     Double(manga.numberOfVolumes) <= filter.maxVolumes &&
-     // Statut
-     (filter.isCompleted == nil || filter.isCompleted == manga.isCompleted)
-     }
-     } */
-    
+
     func toggleSelection<T: Hashable>(item: T, in set: inout Set<T>) {
         if set.contains(item) {
             set.remove(item)
@@ -64,63 +49,70 @@ struct FilterView: View {
                     
                     // Nombre de tomes
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Nombre de mangas max").font(.headline)
-                        Slider(value: $filter.maxVolumes, in: 1...300, step: 1)
-                            .tint(.redSusume)
-                            .frame(width: 200, height: 20)
-                        Text("Maximum : \(Int(filter.maxVolumes)) tomes")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
+                        Text("Nombre de tomes")
+                            .font(.headline)
+                        
+                        HStack {
+                            Spacer()
+                            
+                            Stepper(value: $filter.maxVolumes, in: 1...150, step: 10) {
+                                Text("Maximum : \(Int(filter.maxVolumes)) tomes")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gray)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    .onAppear {
+                        if filter.maxVolumes < 1 || filter.maxVolumes > 150 {
+                            filter.maxVolumes = 10
+                        }
                     }
                     
                     // Statut (terminée ou non)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Statut de la série").font(.headline)
+                        Text("Statut ").font(.headline)
                         HStack {
-                            StatusButton(title: "Tous", isSelected: filter.isCompleted == nil) {
+                            StatusButton(title: "En cours", isSelected: filter.isCompleted == false) {
+                                filter.isCompleted = false
+                            }
+                            StatusButton(title: "Peu m'importe", isSelected: filter.isCompleted == nil) {
                                 filter.isCompleted = nil
                             }
                             StatusButton(title: "Terminée", isSelected: filter.isCompleted == true) {
                                 filter.isCompleted = true
                             }
-                            StatusButton(title: "En cours", isSelected: filter.isCompleted == false) {
-                                filter.isCompleted = false
-                            }
                         }
                     }
                     
                     // Rechercher
-                    Button(action: {
-                        filteredMangas = allMangas.filter { manga in
-                            (filter.selectedGenres.isEmpty || filter.selectedGenres.contains(manga.genre)) &&
-                            (filter.selectedTags.isEmpty || !filter.selectedTags.isDisjoint(with: Set(manga.tags))) &&
-                            (Double(manga.numberOfVolumes) <= filter.maxVolumes) &&
-                            (filter.isCompleted == nil || filter.isCompleted == manga.isCompleted)
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            filteredMangas = allMangas.filter { manga in
+                                (filter.selectedGenres.isEmpty || filter.selectedGenres.contains(manga.genre)) &&
+                                (filter.selectedTags.isEmpty || !filter.selectedTags.isDisjoint(with: Set(manga.tags))) &&
+                                (Double(manga.numberOfVolumes) <= filter.maxVolumes) &&
+                                (filter.isCompleted == nil || filter.isCompleted == manga.isCompleted)
+                            }
+                            navigateToResults = true
+                        }) {
+                            Text("Filtrer")
+                                .font(.system(size: 24, weight: .semibold))
+                                .frame(maxWidth: .infinity, minHeight: 36)
+                                .background(Color.redSusume)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
                         }
-                        navigateToResults = true
-                    }) {
-                        Image(systemName: "arrow.right")
-                            .bold()
-                            .font(.system(size: 40))
-                            .foregroundColor(.redSusume)
-                    }
-                    .navigationDestination(isPresented: $navigateToResults) {
-                        MainView(allMangas: allMangas, filteredMangas: $filteredMangas)
+                        .padding()
                     }
                 }
+                .navigationDestination(isPresented: $navigateToResults) {
+                    MainView(allMangas: $allMangas, filteredMangas: $filteredMangas)
+                }
             }
-            .padding(.top)
+            .padding()
         }
-        .padding()
- 
     }
-}
-
-
-
-#Preview {
-    FilterView(
-        allMangas: mangas,
-        filteredMangas: .constant([])
-    )
 }

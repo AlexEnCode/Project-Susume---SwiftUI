@@ -33,7 +33,7 @@ struct NavBar: View {
 
                 Text("Découvrir View")
                     .tabItem {
-                        Label("Découvrir", image: "LogoSusume") // Ton image personnalisée
+                        Label("Découvrir", image: "smallSUSUME") // Ton image personnalisée
                     }
                     .tag(Tab.decouvrir)
 

@@ -9,12 +9,10 @@ import SwiftUI
 
 @main
 struct SuzumeApp: App {
-  
-    
-    
+
     var body: some Scene {
         WindowGroup {
-            RootView(allMangas: mangas)
+            RootView()
         }
     }
 }
