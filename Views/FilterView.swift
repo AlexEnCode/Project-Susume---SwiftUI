@@ -88,7 +88,7 @@ struct FilterView: View {
                     
                     // Rechercher
                     HStack {
-                        Spacer()
+                        
                         Button(action: {
                             filteredMangas = allMangas.filter { manga in
                                 (filter.selectedGenres.isEmpty || filter.selectedGenres.contains(manga.genre)) &&

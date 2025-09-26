@@ -222,7 +222,7 @@ struct MainView: View {
                 Image(.longSUSUME)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 30)
+                    .frame(width: 100, height: 40)
                     .foregroundColor(.redSusume)
                     .padding(.horizontal, 12)
                 Spacer()

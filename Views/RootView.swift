@@ -26,7 +26,7 @@ struct RootView: View {
                     }
                 }
                 .tabItem {
-                    Label("Découvrir", image: "smallSUSUME")
+                    Label("Découvrir", image: "smallLogo")
                 }
                 .tag(Tab.decouvrir)
 
@@ -65,7 +65,7 @@ struct RootView: View {
                     .opacity(landingOpacity)
                     .transition(.opacity)
                     .onAppear {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             withAnimation(.easeOut(duration: 0.8)) {
                                 landingOpacity = 0.0
                             }

@@ -61,6 +61,7 @@ struct DescriptionView: View {
                         )
                         .ignoresSafeArea()
                     )
+                    
 
                 VStack(alignment: .center, spacing: 12) {
                     Image(manga.coverImageName)

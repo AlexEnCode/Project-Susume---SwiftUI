@@ -22,9 +22,11 @@ struct LandingView: View {
             
                 .padding()
             
-            Text("Choisissons ensemble votre prochaine lecture")
+            Text("À la recherche d’un manga ? \n On commence ensemble !")
                 .foregroundStyle(.gray)
                 .padding(.vertical)
+            
+
             Spacer()
             Spacer()
         }
